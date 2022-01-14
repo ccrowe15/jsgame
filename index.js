@@ -24,21 +24,12 @@ class Player {
     }
 }
 
-class Projectile {
+class Projectile extends Player {
     constructor(x, y, radius, color, velocity) {
-        this.x = x
-        this.y = y
-        this.radius = radius
-        this.color = color
+        super(x, y, radius, color)
         this.velocity = velocity
     }
-    draw() {
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-        ctx.fillStyle = this.color
-        ctx.fill()
-    }
-
+    //inherits draw
     update() {
         this.draw()
         this.x = this.x + this.velocity.x 
@@ -46,37 +37,19 @@ class Projectile {
     }
 }
 
-class Enemy {
+class Enemy extends Projectile {
     constructor(x, y, radius, color, velocity) {
-        this.x = x
-        this.y = y
-        this.radius = radius
-        this.color = color
-        this.velocity = velocity
+        super(x, y, radius, color, velocity)
     }
-    draw() {
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-        ctx.fillStyle = this.color
-        ctx.fill()
-    }
-
-    update() {
-        this.draw()
-        this.x = this.x + this.velocity.x 
-        this.y = this.y + this.velocity.y 
-    }
+    //inherits draw/update
 }
 
-class Particle {
+class Particle extends Projectile {
     constructor(x, y, radius, color, velocity) {
-        this.x = x
-        this.y = y
-        this.radius = radius
-        this.color = color
-        this.velocity = velocity
+        super(x, y, radius, color, velocity)
         this.alpha = 1
     }
+    //override draw + update
     draw() {
         ctx.save()
         ctx.globalAlpha = this.alpha
@@ -117,6 +90,7 @@ function init() {
     scoreEl.innerHTML = score
 }
 
+//timer object is set at gamestart, if timer exists - stop spawning enemies 
 let timer
 function spawnEnemies() {
 	if (timer) {
@@ -126,7 +100,9 @@ function spawnEnemies() {
 	}
 	else {
 		timer = setInterval(() => {
+            //create a new enemy every second
 			const radius = Math.random() * (32 - 6) + 6
+            //enemy x and y
 			let enmx
 			let enmy
 			if (Math.random() < 0.5) {
@@ -137,10 +113,11 @@ function spawnEnemies() {
 				enmx = Math.random() * canvas.width 
 				enmy = Math.random() < 0.5 ? (0 - radius)  : canvas.height + radius
 			}
-			//hue, saturation (how deep), lightness (how bright)
+			//hsl - hue, saturation (how deep), lightness (how bright)
 			
 			const color = `hsl(${Math.random() * 360}, 50%, 50%)`
 
+            //arctan is expensive -> ie future games need to normalize vectors
 			const angle = Math.atan2(y - enmy, x - enmx)
 			const velocity = {
 				x: Math.cos(angle) * 0.85,
@@ -157,9 +134,11 @@ function spawnEnemies() {
 function updateParticles() {
     particles.forEach((particle, index) => {
         if (particle.alpha <= 0) {
+            //remove particle
             particles.splice(index, 1)
         }
         else {
+            //decrease alpha + redraw
             particle.update()
         }
     })
@@ -169,7 +148,7 @@ function updateParticles() {
 function updateProjectiles() {
     projectiles.forEach((projectile, projIndex) => {
         projectile.update()
-        //clear projectile if off screen
+        //remove projectile if off screen
         if (projectile.x + projectile.radius < 0 
             || projectile.x - projectile.radius > canvas.width
             || projectile.y + projectile.radius < 0 
@@ -235,7 +214,7 @@ function updateEnemies() {
 
 let animationID 
 
-//animation/game loop 
+//animation+game loop 
 function animate() {
     animationID = requestAnimationFrame(animate)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
@@ -249,7 +228,6 @@ function animate() {
 
 //create projectile on mouseclick
 addEventListener('click', (event) => {
-    //event gives 
     //console.log(event)
     //to calc angle, get dist from current location to center
     const angle = Math.atan2(event.clientY - y, event.clientX - x)
